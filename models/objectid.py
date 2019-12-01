@@ -20,10 +20,6 @@ def euclidean_distance(inputs):
     u, v = inputs
     return K.sqrt(K.sum((K.square(u - v)), axis=1, keepdims=True))
 
-def contrastive_loss(y_true,y_pred):
-    margin=1.
-    return K.mean((1. - y_true) * K.square(y_pred) + y_true * K.square(K.maximum(margin - y_pred, 0.)))
-    
 def fire(x, squeeze=16, expand=64):
     x = Convolution2D(squeeze, (1,1), padding='valid')(x)
     x = Activation('relu')(x)
