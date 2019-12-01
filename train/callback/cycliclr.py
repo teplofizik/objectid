@@ -4,6 +4,7 @@
 # 
 ########################################################################################
 from tensorflow.keras.callbacks import *
+from tensorflow.keras import backend as K
 
 class CyclicLR(Callback):
     """This callback implements a cyclical learning rate policy (CLR).
@@ -117,9 +118,9 @@ class CyclicLR(Callback):
         logs = logs or {}
 
         if self.clr_iterations == 0:
-            tf.keras.backend.set_value(self.model.optimizer.lr, self.base_lr)
+            K.set_value(self.model.optimizer.lr, self.base_lr)
         else:
-            tf.keras.backend.set_value(self.model.optimizer.lr, self.clr())        
+            K.set_value(self.model.optimizer.lr, self.clr())        
             
     def on_batch_end(self, epoch, logs=None):
         
@@ -127,10 +128,10 @@ class CyclicLR(Callback):
         self.trn_iterations += 1
         self.clr_iterations += 1
 
-        self.history.setdefault('lr', []).append(tf.keras.backend.get_value(self.model.optimizer.lr))
+        self.history.setdefault('lr', []).append(K.get_value(self.model.optimizer.lr))
         self.history.setdefault('iterations', []).append(self.trn_iterations)
 
         for k, v in logs.items():
             self.history.setdefault(k, []).append(v)
         
-        tf.keras.backend.set_value(self.model.optimizer.lr, self.clr())
+        K.set_value(self.model.optimizer.lr, self.clr())
