@@ -39,7 +39,7 @@ class ObjectDataset:
           if len(splitted) == 1:
             filename = g
             path = self.getImageFilename(filename);
-            group.filenames.append(filename) # filename
+            group.filenames.append(path) # filename
             self.total = self.total + 1
           else:
             key = splitted[0]
