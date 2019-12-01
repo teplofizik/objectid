@@ -63,7 +63,7 @@ def squeeze_model():
 
   return Model(img_input, out)
 
-def top_model():
+def objectid_model():
   modelsqueeze = squeeze_model()
   im_in = Input(shape=(96,96,4))
 
@@ -75,12 +75,12 @@ def top_model():
 
   return Model(inputs = [im_in], outputs = feat_x)
 
-def objectid_train_model(model_top):
+def objectid_train_model(objectid_model):
   im_in1 = Input(shape=(96,96,4))
   im_in2 = Input(shape=(96,96,4))
   
-  feat_x1 = model_top(im_in1)
-  feat_x2 = model_top(im_in2)
+  feat_x1 = objectid_model(im_in1)
+  feat_x2 = objectid_model(im_in2)
 
   # L2 Normalization in final layer, tfjs not support Lambda python code layer =)
   # Need perform normalization in pure js
