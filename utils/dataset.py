@@ -104,8 +104,8 @@ class ObjectDataset:
   def getCouple(self):
     gid = self.generateRandomId(len(self.groups))
     ids = self.generateRandomPair(len(self.groups[gid].filenames))
-    img1 = loadImage(self.groups[gid].filenames[ids[0]])
-    img2 = loadImage(self.groups[gid].filenames[ids[1]])
+    img1 = self.loadImage(self.groups[gid].filenames[ids[0]])
+    img2 = self.loadImage(self.groups[gid].filenames[ids[1]])
     return np.array([img1,img2])
 
   # Generate couple with different chars
@@ -113,8 +113,8 @@ class ObjectDataset:
     gids = self.generateRandomPair(len(self.groups))
     id0 = self.generateRandomId(len(self.groups[gids[0]].filenames))
     id1 = self.generateRandomId(len(self.groups[gids[1]].filenames))
-    img1 = loadImage(self.groups[gids[0]].filenames[id0])
-    img2 = loadImage(self.groups[gids[1]].filenames[id1])
+    img1 = self.loadImage(self.groups[gids[0]].filenames[id0])
+    img2 = self.loadImage(self.groups[gids[1]].filenames[id1])
     return np.array([img1,img2])
 
   def getKanji(self,groupid):
@@ -125,6 +125,6 @@ class ObjectDataset:
 
   def getSingle(self,groupid,id):
     if ((groupid < len(self.groups)) and (id < len(self.groups[groupid].filenames))):
-      return np.array([loadImage(self.groups[groupid].filenames[id])])[0]
+      return np.array([self.loadImage(self.groups[groupid].filenames[id])])[0]
     else:
       return None
