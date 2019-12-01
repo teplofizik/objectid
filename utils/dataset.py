@@ -7,6 +7,9 @@
 # * only for debug and external visualization tools and export id
 #######################################################################################
 
+import numpy as np
+from PIL import Image
+
 class ObjectGroup:
   def __init__(self):
     self.filenames = []
