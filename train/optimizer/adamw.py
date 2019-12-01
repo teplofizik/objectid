@@ -9,9 +9,6 @@ import copy
 from six.moves import zip
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.utils.generic_utils import serialize_keras_object
-from tensorflow.keras.utils.generic_utils import deserialize_keras_object
-from tensorflow.keras.legacy import interfaces
 
 from tensorflow.keras.optimizers import Optimizer
 
