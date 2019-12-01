@@ -58,14 +58,14 @@ class ObjectDataset:
     val = ObjectDataset(self.localdir,"val") 
     for g in self.groups:
        if trainmode:
-         train.total += len(g.images)
+         train.total += len(g.filenames)
          train.groups.append(g)
 
          if(train.total > traincount):
             trainmode = False
 
        else:
-         val.total += len(g.images)
+         val.total += len(g.filenames)
          val.groups.append(g)
 
     return (train, val)
