@@ -8,7 +8,7 @@
 #######################################################################################
 
 class ObjectGroup:
-  def __ini__(self):
+  def __init__(self):
     self.filenames = []
     self.key = ""
     self.id = 0
