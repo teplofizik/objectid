@@ -8,12 +8,12 @@ import six
 import copy
 from six.moves import zip
 
-from keras import backend as K
-from keras.utils.generic_utils import serialize_keras_object
-from keras.utils.generic_utils import deserialize_keras_object
-from keras.legacy import interfaces
+from tensorflow.keras import backend as K
+from tensorflow.keras.utils.generic_utils import serialize_keras_object
+from tensorflow.keras.utils.generic_utils import deserialize_keras_object
+from tensorflow.keras.legacy import interfaces
 
-from keras.optimizers import Optimizer
+from tensorflow.keras.optimizers import Optimizer
 
 class AdamW(Optimizer):
     """AdamW optimizer.
@@ -53,7 +53,7 @@ class AdamW(Optimizer):
         self.epsilon = epsilon
         self.initial_decay = decay
 
-    @interfaces.legacy_get_updates_support
+    #@interfaces.legacy_get_updates_support
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         self.updates = [K.update_add(self.iterations, 1)]
