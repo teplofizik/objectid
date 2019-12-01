@@ -9,7 +9,6 @@ import copy
 from six.moves import zip
 
 from tensorflow.keras import backend as K
-
 from tensorflow.keras.optimizers import Optimizer
 
 class AdamW(Optimizer):
@@ -34,7 +33,7 @@ class AdamW(Optimizer):
                  epsilon=None, decay=0., weight_decay=0.025, 
                  batch_size=1, samples_per_epoch=1, 
                  epochs=1, **kwargs):
-        super(AdamW, self).__init__(**kwargs)
+        super(AdamW, self).__init__(**kwargs, name="AdamW")
         with K.name_scope(self.__class__.__name__):
             self.iterations = K.variable(0, dtype='int64', name='iterations')
             self.lr = K.variable(lr, name='lr')
