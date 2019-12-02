@@ -9,6 +9,7 @@
 
 import numpy as np
 from PIL import Image
+from tensorflow.keras.utils import Sequence
 
 class ObjectGroup:
   def __init__(self):
@@ -58,9 +59,11 @@ class ObjectDataset:
     for ig in dataset.groups:
       localgroup = self.getGroupByKey(ig.key)
       if localgroup == None:
+        #print("Object group '{}' not found, add all group".format(ig.key))
         self.groups.append(ig)
       else:
-        for fn in localgroup.filenames:
+        #print("Add to group '{}' {} filenames".format(ig.key,len(ig.filenames)))
+        for fn in ig.filenames:
           localgroup.filenames.append(fn)
   
   # valpart: (0-1) percent of val data
@@ -145,3 +148,63 @@ class ObjectDataset:
       return np.array([self.loadImage(self.groups[groupid].filenames[id])])[0]
     else:
       return None
+      
+
+class DatasetSequence(Sequence):
+  def __init__(self, dataset, count, batch_size):
+    self.dataset = dataset
+    self.epoch = 0
+    self.count = count
+    self.batch_size = batch_size
+    self.epochdataX1 = []
+    self.epochdataX2 = []
+    self.epochdataY = []
+    self.updateDataset()
+
+  def __len__(self):
+    return int(np.ceil(self.count / float(self.batch_size)))
+    
+  def __getitem__(self, idx):
+    vfrom = idx * self.batch_size
+    vto = (idx + 1) * self.batch_size
+    #print("X:{}, Y:{}".format(len(self.epochdataX1),len(self.epochdataY)))
+
+    arra = np.asarray(self.epochdataX1[vfrom:vto])
+    arrb = np.asarray(self.epochdataX2[vfrom:vto])
+    arry = np.asarray(self.epochdataY[vfrom:vto])
+
+    return [arra,arrb],arry
+
+  def on_epoch_end(self):
+    if self.epoch % 1 == 0:
+       pass
+    # modify data
+    self.updateDataset()
+    self.epoch += 1
+
+  def updateDataset(self):
+    X1=[]
+    X2=[]
+    y=[]
+    switch=True
+    for _ in range(self.count):
+      if switch:
+        couple = self.dataset.getCouple()
+        X1.append(couple[0])
+        X2.append(couple[1])
+        y.append(np.array([0.]))
+      else:
+        wrong = self.dataset.getWrong()
+        X1.append(wrong[0])
+        X2.append(wrong[1])
+        y.append(np.array([1.]))
+      switch=not switch
+    
+    X1 = np.asarray(X1)
+    X2 = np.asarray(X2)
+    y = np.asarray(y)
+
+    self.epochdataX1 = X1
+    self.epochdataX2 = X2
+    self.epochdataY = y
+    #print(np.shape(X1))
