@@ -179,7 +179,7 @@ class DatasetSequence(Sequence):
     if self.epoch % 15 == 0:
        self.epoch += 1
        pass
-    else
+    else:
        # modify data
        self.updateDataset()
        self.epoch += 1
