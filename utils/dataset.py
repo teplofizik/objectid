@@ -176,11 +176,13 @@ class DatasetSequence(Sequence):
     return [arra,arrb],arry
 
   def on_epoch_end(self):
-    if self.epoch % 1 == 0:
+    if self.epoch % 15 == 0:
+       self.epoch += 1
        pass
-    # modify data
-    self.updateDataset()
-    self.epoch += 1
+    else
+       # modify data
+       self.updateDataset()
+       self.epoch += 1
 
   def updateDataset(self):
     X1=[]
