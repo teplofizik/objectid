@@ -24,6 +24,7 @@ class ObjectDataset:
     self.groups = []
     self.type   = type
     self.total  = 0
+    self.load()
     return
 
   # filename: path to metadat file
@@ -52,7 +53,16 @@ class ObjectDataset:
         self.groups.append(group)
     finally:
       fp.close()
-    
+  
+  def join(self,dataset):
+    for ig in dataset.groups:
+      localgroup = self.getGroupByKey(ig.key)
+      if localgroup == None:
+        self.groups.append(ig)
+      else:
+        for fn in localgroup.filenames:
+          localgroup.filenames.append(fn)
+  
   # valpart: (0-1) percent of val data
   def splitTrainVal(self,valpart):
     traincount = self.total * (1 - valpart)
@@ -117,9 +127,16 @@ class ObjectDataset:
     img2 = self.loadImage(self.groups[gids[1]].filenames[id1])
     return np.array([img1,img2])
 
-  def getKanji(self,groupid):
+  def getGroupByKey(self,key):
+    for g in self.groups:
+      if g.key == key:
+        return g
+    
+    return None
+
+  def getKey(self,groupid):
     if groupid < len(self.groups):
-      return self.groups[groupid].kanji
+      return self.groups[groupid].key
     else:
       return None
 
