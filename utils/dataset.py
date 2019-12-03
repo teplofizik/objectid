@@ -212,15 +212,9 @@ class DatasetSequence(Sequence):
         y.append(np.array([1.]))
       switch=not switch
     
-    X1 = np.asarray(X1)
-    X2 = np.asarray(X2)
-    y = np.asarray(y)
-
-    #XX1=X[0,:]
-    #XX2=X[1,:]
-    self.epochdataX1 = X1
-    self.epochdataX2 = X2
-    
+    self.epochdataX1 = np.asarray(X1)
+    self.epochdataX2 = np.asarray(X2)
+    self.epochdataY = np.asarray(y)
 
 class DatasetLongSequence(Sequence):
   def __init__(self, dataset, count, batch_size):
