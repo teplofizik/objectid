@@ -113,22 +113,35 @@ class ObjectDataset:
     img = np.asarray(Image.open(path)).astype(float)
     return img
 
-  # Generate couple with same chars
-  def getCouple(self):
+  def getPairImage(self,pair):
+    img1 = self.loadImage(self.groups[pair[0][0]].filenames[pair[0][1]])
+    img2 = self.loadImage(self.groups[pair[1][0]].filenames[pair[1][1]])
+    return np.array([img1,img2])
+
+  # Generate couple with same chars (only id)
+  def getCoupleId(self):
     gid = self.generateRandomId(len(self.groups))
     ids = self.generateRandomPair(len(self.groups[gid].filenames))
     img1 = self.loadImage(self.groups[gid].filenames[ids[0]])
     img2 = self.loadImage(self.groups[gid].filenames[ids[1]])
-    return np.array([img1,img2])
+    return [[gid,ids[0]],[gid,ids[1]]]
 
-  # Generate couple with different chars
-  def getWrong(self):
+  # Generate couple with different chars (only id)
+  def getWrongId(self):
     gids = self.generateRandomPair(len(self.groups))
     id0 = self.generateRandomId(len(self.groups[gids[0]].filenames))
     id1 = self.generateRandomId(len(self.groups[gids[1]].filenames))
-    img1 = self.loadImage(self.groups[gids[0]].filenames[id0])
-    img2 = self.loadImage(self.groups[gids[1]].filenames[id1])
-    return np.array([img1,img2])
+    return [[gids[0],id0],[gids[0],id1]]
+
+  # Generate couple with same chars
+  def getCouple(self):
+    cp = self.getCoupleId()
+    return self.getPairImage(cp)
+
+  # Generate couple with different chars
+  def getWrong(self):
+    cp = self.getWrongId()
+    return self.getPairImage(cp)
 
   def getGroupByKey(self,key):
     for g in self.groups:
@@ -176,10 +189,9 @@ class DatasetSequence(Sequence):
     return [arra,arrb],arry
 
   def on_epoch_end(self):
-    if self.epoch % 15 == 0:
+    if self.epoch % 20 == 0:
        self.epoch += 1
-       pass
-    else
+    else:
        # modify data
        self.updateDataset()
        self.epoch += 1
@@ -206,7 +218,67 @@ class DatasetSequence(Sequence):
     X2 = np.asarray(X2)
     y = np.asarray(y)
 
+    #XX1=X[0,:]
+    #XX2=X[1,:]
     self.epochdataX1 = X1
     self.epochdataX2 = X2
+    
+
+class DatasetLongSequence(Sequence):
+  def __init__(self, dataset, count, batch_size):
+    self.dataset = dataset
+    self.epoch = 0
+    self.count = count
+    self.batch_size = batch_size
+    self.epochdataX = []
+    self.epochdataY = []
+    self.updateDataset()
+
+  def __len__(self):
+    return int(np.ceil(self.count / float(self.batch_size)))
+    
+  def __getitem__(self, idx):
+    vfrom = idx * self.batch_size
+    vto = (idx + 1) * self.batch_size
+    #print("X:{}, Y:{}".format(len(self.epochdataX1),len(self.epochdataY)))
+    X1 = []
+    X2 = []
+    arra = self.epochdataX[vfrom:vto]
+    arry = np.asarray(self.epochdataY[vfrom:vto])
+
+    for pairidx in arra:
+       pair = self.statset.getPairImage(pairidx)
+       X1.append(pair[0])
+       X2.append(pair[1])
+
+    return [np.asarray(X1),np.asarray(X2)],arry
+
+  def on_epoch_end(self):
+    if self.epoch % 20 == 0:
+       self.epoch += 1
+    else:
+       # modify data
+       self.updateDataset()
+       self.epoch += 1
+
+  def updateDataset(self):
+    X=[]
+    y=[]
+    switch=True
+    for _ in range(self.count):
+      if switch:
+        couple = self.dataset.getCoupleId()
+        X.append(couple)
+        y.append(np.array([0.]))
+      else:
+        wrong = self.dataset.getWrongId()
+        X.append(wrong)
+        y.append(np.array([1.]))
+      switch=not switch
+    
+    self.epochdataX = np.asarray(X)
+    self.epochdataY = np.asarray(y)
+    
     self.epochdataY = y
     #print(np.shape(X1))
+    
