@@ -247,7 +247,7 @@ class DatasetLongSequence(Sequence):
     arry = np.asarray(self.epochdataY[vfrom:vto])
 
     for pairidx in arra:
-       pair = self.statset.getPairImage(pairidx)
+       pair = self.dataset.getPairImage(pairidx)
        X1.append(pair[0])
        X2.append(pair[1])
 
