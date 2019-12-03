@@ -129,7 +129,7 @@ class ObjectDataset:
     gids = self.generateRandomPair(len(self.groups))
     id0 = self.generateRandomId(len(self.groups[gids[0]].filenames))
     id1 = self.generateRandomId(len(self.groups[gids[1]].filenames))
-    return [[gids[0],id0],[gids[0],id1]]
+    return [[gids[0],id0],[gids[1],id1]]
 
   # Generate couple with same chars
   def getCouple(self):
