@@ -122,8 +122,6 @@ class ObjectDataset:
   def getCoupleId(self):
     gid = self.generateRandomId(len(self.groups))
     ids = self.generateRandomPair(len(self.groups[gid].filenames))
-    img1 = self.loadImage(self.groups[gid].filenames[ids[0]])
-    img2 = self.loadImage(self.groups[gid].filenames[ids[1]])
     return [[gid,ids[0]],[gid,ids[1]]]
 
   # Generate couple with different chars (only id)
