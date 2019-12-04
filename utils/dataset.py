@@ -10,10 +10,12 @@
 import numpy as np
 from PIL import Image
 from tensorflow.keras.utils import Sequence
+import tensorflow as tf
 
 class ObjectGroup:
   def __init__(self):
     self.filenames = []
+    self.kids = []
     self.key = ""
     self.id = 0
     self.kid = None
@@ -25,6 +27,7 @@ class ObjectDataset:
     self.groups = []
     self.type   = type
     self.total  = 0
+    self.kidgenerated = False
     self.load()
     return
 
@@ -159,7 +162,52 @@ class ObjectDataset:
       return np.array([self.loadImage(self.groups[groupid].filenames[id])])[0]
     else:
       return None
-      
+
+  def generateId(self,model):
+    for gid in range(0,len(self.groups)):
+      # Iterate all keys
+      count = len(self.groups[gid].filenames)
+      index = 0
+      temp = 0
+      key = self.groups[gid].key
+      self.groups[gid].kids = []
+      for id in range(0,len(self.groups[gid].filenames)):
+        kid = model.predict(self.getSingle(gid,id).reshape((1,96,96,4)))
+        kid = tf.math.l2_normalize(kid,axis=1)
+        self.groups[gid].kids.append(kid)
+        temp = np.add(temp, kid)
+
+      self.groups[gid].kid = np.divide(temp, count)
+    self.kidgenerated = True
+
+  def calcDistanceOfPair(self,pair):
+    kid1 = self.groups[pair[0][0]].kids[pair[0][1]]
+    kid2 = self.groups[pair[1][0]].kids[pair[1][1]]
+    return np.sqrt(np.sum((np.pow(u - v, 2))))
+
+  def getCoupleIdDist(self,mindist):
+    while True:
+      pair = self.getCoupleId()
+      dist = calcDistanceOfPair(pair)
+      if dist > mindist:
+        return pair
+  
+  def generateWrongIdDist(self,maxdist):
+    while True:
+      pair = self.getWrongId()
+      dist = calcDistanceOfPair(pair)
+      if dist < maxdist:
+        return pair
+
+  # Generate couple with same chars
+  def getCoupleDist(self,mindist):
+    cp = self.getCoupleIdDist(mindist)
+    return self.getPairImage(cp)
+
+  # Generate couple with different chars
+  def getWrongDist(self,maxdist):
+    cp = self.getWrongIdDist(maxdist)
+    return self.getPairImage(cp)
 
 class DatasetSequence(Sequence):
   def __init__(self, dataset, count, batch_size):
@@ -271,6 +319,4 @@ class DatasetLongSequence(Sequence):
     self.epochdataX = np.asarray(X)
     self.epochdataY = np.asarray(y)
     
-    self.epochdataY = y
-    #print(np.shape(X1))
-    
+    self.epochdataY = np.asarray(y)
