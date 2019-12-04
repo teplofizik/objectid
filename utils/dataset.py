@@ -148,6 +148,12 @@ class ObjectDataset:
       cp = self.getWrongId()
     return self.getPairImage(cp)
 
+  def getGroupIdByKey(self,key):
+    for gid, g in enumerate(self.groups):
+      if g.key == key:
+        return gid
+    
+    return None
   def getGroupByKey(self,key):
     for g in self.groups:
       if g.key == key:
@@ -166,6 +172,25 @@ class ObjectDataset:
       return np.array([self.loadImage(self.groups[groupid].filenames[id])])[0]
     else:
       return None
+
+  def getKID(self,gid,id,model):
+    image = self.getSingle(gid,id).reshape((1,96,96,4))
+    # use model(image), model.predict(image) cause memory leak
+    kid = tf.math.l2_normalize(model(image),axis=1)
+    del image
+    return kid
+
+  def getAverageKID(self,gid,model):
+    temp = 0
+    count = len(self.groups[gid].filenames)
+    for id in range(0,count):
+      kid = self.getKID(gid,id,model)
+      temp = np.add(temp, kid)
+ 
+    return np.divide(temp, count)
+
+  def calcKidDistance(self,kid1,kid2):
+    return np.sqrt(np.sum((np.power(kid1 - kid2, 2))))
 
 class KIDObjectGroup:
   def __init__(self,og):
@@ -205,10 +230,7 @@ class KIDObjectDataset(ObjectDataset):
       kid = None
       kids = []
       for id in range(0,count):
-        image = self.getSingle(gid,id).reshape((1,96,96,4))
-        kid = model(image)
-        del image
-        kid = tf.math.l2_normalize(kid,axis=1)
+        kid = self.getKID(gid,id,model)
         kids.append(kid)
         temp = np.add(temp, kid)
 
@@ -232,26 +254,9 @@ class KIDObjectDataset(ObjectDataset):
   def getWrongId(self):
     return self.getWrongIdDist(self.maxdist)
 
-  def calcKidDistance(self,kid1,kid2):
-    return np.sqrt(np.sum((np.power(kid1 - kid2, 2))))
-
   def calcDistanceOfPair(self,pair):
       kid1 = self.groups[pair[0][0]].kids[pair[0][1]]
       kid2 = self.groups[pair[1][0]].kids[pair[1][1]]
-      return self.calcKidDistance(kid1,kid2)
-
-  def calcDistanceOfPairOld(self,pair):
-    if pair[0][0] == pair[1][0]:
-      image1 = self.getSingle(pair[0][0],pair[0][1]).reshape((1,96,96,4))
-      image2 = self.getSingle(pair[1][0],pair[1][1]).reshape((1,96,96,4))
-      # use model(image), model.predict(image) cause memory leak
-      kid1 = tf.math.l2_normalize(self.model(image1),axis=1)
-      kid2 = tf.math.l2_normalize(self.model(image2),axis=1)
-      del image1,image2
-      return self.calcKidDistance(kid1,kid2)
-    else:
-      kid1 = self.groups[pair[0][0]].kid
-      kid2 = self.groups[pair[1][0]].kid
       return self.calcKidDistance(kid1,kid2)
 
   def getCoupleIdDist(self,mindist):
