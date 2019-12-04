@@ -11,14 +11,13 @@ import numpy as np
 from PIL import Image
 from tensorflow.keras.utils import Sequence
 import tensorflow as tf
+import gc
 
 class ObjectGroup:
   def __init__(self):
     self.filenames = []
-    self.kids = []
     self.key = ""
     self.id = 0
-    self.kid = None
     return
 
 class ObjectDataset:
@@ -27,7 +26,6 @@ class ObjectDataset:
     self.groups = []
     self.type   = type
     self.total  = 0
-    self.kidgenerated = False
     self.load()
     return
 
@@ -136,12 +134,18 @@ class ObjectDataset:
 
   # Generate couple with same chars
   def getCouple(self):
-    cp = self.getCoupleId()
+    if self.kidgenerated:
+      cp = self.getCoupleIdDist(self.mindist)
+    else:
+      cp = self.getCoupleId()
     return self.getPairImage(cp)
 
   # Generate couple with different chars
   def getWrong(self):
-    cp = self.getWrongId()
+    if self.kidgenerated:
+      cp = self.getWrongIdDist(self.maxdist)
+    else:
+      cp = self.getWrongId()
     return self.getPairImage(cp)
 
   def getGroupByKey(self,key):
@@ -163,42 +167,108 @@ class ObjectDataset:
     else:
       return None
 
+class KIDObjectGroup:
+  def __init__(self,og):
+    self.filenames = og.filenames
+    self.key = og.key
+    self.id = og.id
+    self.kid = None
+    self.diff = None
+    return
+
+class KIDObjectDataset(ObjectDataset):
+  def __init__(self,dataset,model,maxcount=0):
+    self.mindist = 0.15
+    self.maxdist = 0.85
+    
+    self.localdir = dataset.localdir
+    self.groups = []
+    self.type   = dataset.type
+    self.total  = dataset.total
+    self.model  = model
+    
+    if maxcount == 0:
+      maxcount = len(dataset.groups)
+
+    for gid in range(0,maxcount):
+      self.groups.append(KIDObjectGroup(dataset.groups[gid]))
+
+    self.generateId(model)
+    return
+
   def generateId(self,model):
     for gid in range(0,len(self.groups)):
+      print("{}: generate id {}/{}".format(self.groups[gid].key,gid+1,len(self.groups)))
       # Iterate all keys
       count = len(self.groups[gid].filenames)
-      index = 0
       temp = 0
-      key = self.groups[gid].key
-      self.groups[gid].kids = []
-      for id in range(0,len(self.groups[gid].filenames)):
-        kid = model.predict(self.getSingle(gid,id).reshape((1,96,96,4)))
+      kid = None
+      kids = []
+      for id in range(0,count):
+        image = self.getSingle(gid,id).reshape((1,96,96,4))
+        kid = model(image)
+        del image
         kid = tf.math.l2_normalize(kid,axis=1)
-        self.groups[gid].kids.append(kid)
+        kids.append(kid)
         temp = np.add(temp, kid)
 
-      self.groups[gid].kid = np.divide(temp, count)
+      groupkid = np.divide(temp, count)
+      self.groups[gid].kid = groupkid
+      diff = 0
+      for id in range(0,count):
+        diff += self.calcKidDistance(kids[id],groupkid)
+      self.groups[gid].diff = diff
+      self.groups[gid].kids = kids
+
+      del kids, diff, temp, count, kid
+
     self.kidgenerated = True
 
+  # Generate couple with same chars
+  def getCoupleId(self):
+    return self.getCoupleIdDist(self.mindist)
+
+  # Generate couple with different chars
+  def getWrongId(self):
+    return self.getWrongIdDist(self.maxdist)
+
+  def calcKidDistance(self,kid1,kid2):
+    return np.sqrt(np.sum((np.power(kid1 - kid2, 2))))
+
   def calcDistanceOfPair(self,pair):
-    kid1 = self.groups[pair[0][0]].kids[pair[0][1]]
-    kid2 = self.groups[pair[1][0]].kids[pair[1][1]]
-    return np.sqrt(np.sum((np.pow(u - v, 2))))
+      kid1 = self.groups[pair[0][0]].kids[pair[0][1]]
+      kid2 = self.groups[pair[1][0]].kids[pair[1][1]]
+      return self.calcKidDistance(kid1,kid2)
+
+  def calcDistanceOfPairOld(self,pair):
+    if pair[0][0] == pair[1][0]:
+      image1 = self.getSingle(pair[0][0],pair[0][1]).reshape((1,96,96,4))
+      image2 = self.getSingle(pair[1][0],pair[1][1]).reshape((1,96,96,4))
+      # use model(image), model.predict(image) cause memory leak
+      kid1 = tf.math.l2_normalize(self.model(image1),axis=1)
+      kid2 = tf.math.l2_normalize(self.model(image2),axis=1)
+      del image1,image2
+      return self.calcKidDistance(kid1,kid2)
+    else:
+      kid1 = self.groups[pair[0][0]].kid
+      kid2 = self.groups[pair[1][0]].kid
+      return self.calcKidDistance(kid1,kid2)
 
   def getCoupleIdDist(self,mindist):
-    while True:
-      pair = self.getCoupleId()
-      dist = calcDistanceOfPair(pair)
+    for i in range(0, 10):
+      pair = super().getCoupleId()
+      dist = self.calcDistanceOfPair(pair)
       if dist > mindist:
-        return pair
-  
-  def generateWrongIdDist(self,maxdist):
-    while True:
-      pair = self.getWrongId()
-      dist = calcDistanceOfPair(pair)
-      if dist < maxdist:
-        return pair
+        break
+    return pair
 
+  def getWrongIdDist(self,maxdist):
+    for i in range(0, 10):
+      pair = super().getWrongId()
+      dist = self.calcDistanceOfPair(pair)
+      if dist < maxdist:
+        break
+    return pair
   # Generate couple with same chars
   def getCoupleDist(self,mindist):
     cp = self.getCoupleIdDist(mindist)
@@ -298,7 +368,7 @@ class DatasetLongSequence(Sequence):
        self.epoch += 1
     else:
        # modify data
-       self.updateDataset()
+       #self.updateDataset()
        self.epoch += 1
 
   def updateDataset(self):
