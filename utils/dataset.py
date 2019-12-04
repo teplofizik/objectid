@@ -134,18 +134,12 @@ class ObjectDataset:
 
   # Generate couple with same chars
   def getCouple(self):
-    if self.kidgenerated:
-      cp = self.getCoupleIdDist(self.mindist)
-    else:
-      cp = self.getCoupleId()
+    cp = self.getCoupleId()
     return self.getPairImage(cp)
 
   # Generate couple with different chars
   def getWrong(self):
-    if self.kidgenerated:
-      cp = self.getWrongIdDist(self.maxdist)
-    else:
-      cp = self.getWrongId()
+    cp = self.getWrongId()
     return self.getPairImage(cp)
 
   def getGroupIdByKey(self,key):
