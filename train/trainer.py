@@ -18,6 +18,8 @@ class Trainer:
     self.reducelronplateau = None
     self.val_gen = None
     self.epochs = 50
+    self.trainsize = 200000
+    self.valsize = 15000
     # LearningRateScheduler
 
   def setLR(self,lr):
@@ -33,9 +35,9 @@ class Trainer:
     self.reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0.000001)
 
   def run(self, train, val = None):
-    gen = DatasetLongSequence(train,60000,200)
+    gen = DatasetLongSequence(train,self.trainsize,200)
     if val is not None:
-      self.val_gen = DatasetSequence(val,6000,200)
+      self.val_gen = DatasetSequence(val,self.valsize,200)
     callbacks = []
     if self.earlystopping is not None:
       callbacks.append(self.earlystopping)
