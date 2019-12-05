@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../../')
+
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from objectid.utils.dataset import ObjectDataset, DatasetSequence
 from tensorflow.keras import backend as K
