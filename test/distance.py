@@ -1,5 +1,4 @@
 
-
 class DistanceTester:
   def __init__(self,keylist):
     self.keys = keylist
