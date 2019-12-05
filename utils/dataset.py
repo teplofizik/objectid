@@ -206,7 +206,7 @@ class KIDObjectDataset(ObjectDataset):
     self.total  = dataset.total
     self.model  = model
     
-    if maxcount == 0:
+    if (maxcount == 0) or (maxcount > len(dataset.groups)):
       maxcount = len(dataset.groups)
 
     for gid in range(0,maxcount):

@@ -1,6 +1,6 @@
-
-from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from objectid.utils.dataset import ObjectDataset, DatasetSequence
+from tensorflow.keras import backend as K
 
 #example
 # trainer = Trainer(final_model)
@@ -16,8 +16,13 @@ class Trainer:
     self.earlystopping = None
     self.modelcheckpoint = None
     self.reducelronplateau = None
+    self.val_gen = None
+    self.epochs = 50
     # LearningRateScheduler
 
+  def setLR(self,lr):
+    K.set_value(self.model.optimizer.lr, lr)
+    
   def earlyStopping(self):
     self.earlystopping = EarlyStopping(monitor='val_loss', patience=4)
 
@@ -25,11 +30,12 @@ class Trainer:
     self.modelcheckpoint = ModelCheckpoint(filepath=filename, monitor='val_loss', save_best_only=True)
 
   def reduceLROnPlateau(self):
-    self.reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=8, verbose=0, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0)
+    self.reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0.000001)
 
-  def run(self, train, val):
-    gen = DatasetLongSequence(train,15000,200)
-    val_gen = DatasetSequence(val,1500,100)
+  def run(self, train, val = None):
+    gen = DatasetLongSequence(train,60000,200)
+    if val is not None:
+      self.val_gen = DatasetSequence(val,6000,200)
     callbacks = []
     if self.earlystopping is not None:
       callbacks.append(self.earlystopping)
@@ -38,4 +44,4 @@ class Trainer:
     if self.reducelronplateau is not None:
       callbacks.append(self.reducelronplateau)
 
-    outputs = self.model.fit_generator(gen, steps_per_epoch=20, epochs=50, validation_data = val_gen, validation_steps=20,callbacks=callbacks)
+    outputs = self.model.fit_generator(gen, steps_per_epoch=20, epochs=self.epochs, validation_data = self.val_gen, validation_steps=20,callbacks=callbacks)
