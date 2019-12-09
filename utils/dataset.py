@@ -120,10 +120,10 @@ class ObjectDataset:
     
   # Generate random id in range 0..range
   def generateRandomIdEx(self,range,exclude):
-    id = np.random.randint(0,range);
+    id = np.random.randint(0,range)
     if exclude is not None:
       while (id in exclude):
-        id = np.random.randint(0,range);
+        id = np.random.randint(0,range)
 
     return id;
     
