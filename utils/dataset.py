@@ -106,9 +106,26 @@ class ObjectDataset:
       id2 = np.random.randint(0,range);
     return [id1, id2]
 
+  # return [anchor, positive, negative]
+  def generateTriplet(self):
+    gid_pos = self.generateRandomId(len(self.groups))
+    ids = self.generateRandomPair(len(self.groups[gid_pos].filenames))
+    gid_neg = self.generateRandomIdEx(len(self.groups),[gid_pos])
+    idn = self.generateRandomId(len(self.groups[gid_neg].filenames))
+    return [[gid_pos,ids[0]],[gid_pos,ids[1]],[gid_neg,idn]]
+
   # Generate random id in range 0..range
   def generateRandomId(self,range):
     return np.random.randint(0,range);
+    
+  # Generate random id in range 0..range
+  def generateRandomIdEx(self,range,exclude):
+    id = np.random.randint(0,range);
+    if exclude is not None:
+      while (id in exclude):
+        id = np.random.randint(0,range);
+
+    return id;
     
   def loadImage(self,path):
     img = np.asarray(Image.open(path)).astype(float)
