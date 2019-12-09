@@ -136,6 +136,12 @@ class ObjectDataset:
     img2 = self.loadImage(self.groups[pair[1][0]].filenames[pair[1][1]])
     return np.array([img1,img2])
 
+  def getTripletImage(self,triplet):
+    img1 = self.loadImage(self.groups[triplet[0][0]].filenames[triplet[0][1]])
+    img2 = self.loadImage(self.groups[triplet[1][0]].filenames[triplet[1][1]])
+    img3 = self.loadImage(self.groups[triplet[2][0]].filenames[triplet[2][1]])
+    return np.array([img1,img2,img3])
+
   # Generate couple with same chars (only id)
   def getCoupleId(self):
     gid = self.generateRandomId(len(self.groups))
