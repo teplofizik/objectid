@@ -155,6 +155,14 @@ class ObjectDataset:
     id1 = self.generateRandomId(len(self.groups[gids[1]].filenames))
     return [[gids[0],id0],[gids[1],id1]]
 
+  def getWrongIdByKanji(self,k1,k2):
+    kid1 = self.getGroupIdByKey(k1)
+    kid2 = self.getGroupIdByKey(k1)
+        
+    id0 = self.generateRandomId(len(self.groups[kid1].filenames))
+    id1 = self.generateRandomId(len(self.groups[kid2].filenames))
+    return [[kid1,id0],[kid2,id1]]
+
   # Generate couple with same chars
   def getCouple(self):
     cp = self.getCoupleId()
@@ -175,7 +183,7 @@ class ObjectDataset:
     for g in self.groups:
       if g.key == key:
         return g
-    
+
     return None
 
   def getKey(self,groupid):
