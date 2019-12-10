@@ -158,7 +158,10 @@ class ObjectDataset:
   def getWrongIdByKanji(self,k1,k2):
     kid1 = self.getGroupIdByKey(k1)
     kid2 = self.getGroupIdByKey(k1)
-        
+    
+    if(kid1 is None) or(kid2 is None):
+      return None
+
     id0 = self.generateRandomId(len(self.groups[kid1].filenames))
     id1 = self.generateRandomId(len(self.groups[kid2].filenames))
     return [[kid1,id0],[kid2,id1]]
