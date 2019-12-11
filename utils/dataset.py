@@ -32,7 +32,7 @@ class ObjectDataset:
   # filename: path to metadat file
   def load(self):
     try:
-      fp = open(self.getListFilename(), 'r')
+      fp = open(self.getListFilename(), 'r', encoding="utf8")
       for cnt, line in enumerate(fp):
         ingroup = line.strip().split(",")
         group = ObjectGroup()
@@ -422,4 +422,87 @@ class DatasetLongSequence(Sequence):
     self.epochdataX = np.asarray(X)
     self.epochdataY = np.asarray(y)
     
+    self.epochdataY = np.asarray(y)
+
+
+class DatasetLongGroupSequence(Sequence):
+  def __init__(self, dataset, count, batch_size, groupfn, updateeach):
+    self.dataset = dataset
+    self.epoch = 0
+    self.count = count
+    self.batch_size = batch_size
+    self.epochdataX = []
+    self.epochdataY = []
+    self.groups = []
+    self.updateeach = updateeach
+
+    with open(groupfn, 'r', encoding="utf8") as fp:
+      for cnt, line in enumerate(fp):
+        kanji = line.strip()
+        self.groups.append(kanji)
+
+    self.updateDataset()
+
+
+  def __len__(self):
+    return int(np.ceil(self.count / float(self.batch_size)))
+    
+  def __getitem__(self, idx):
+    vfrom = idx * self.batch_size
+    vto = (idx + 1) * self.batch_size
+    #print("X:{}, Y:{}".format(len(self.epochdataX1),len(self.epochdataY)))
+    X1 = []
+    X2 = []
+    arra = self.epochdataX[vfrom:vto]
+    arry = np.asarray(self.epochdataY[vfrom:vto])
+
+    for pairidx in arra:
+       pair = self.dataset.getPairImage(pairidx)
+       X1.append(pair[0])
+       X2.append(pair[1])
+
+    #print("dataset get {} block {}-{}".format(idx,vfrom,vto))
+    return [np.asarray(X1),np.asarray(X2)],arry
+
+  def on_epoch_end(self):
+    if (self.updateeach != None) and (self.updateeach != 0):
+      if self.epoch % self.updateeach == 0:
+        self.updateDataset()
+      #else:
+        # modify data
+      self.epoch += 1
+
+  def updateDataset(self):
+    X=[]
+    y=[]
+    switch=0
+    for _ in range(self.count):
+      if switch == 0:
+        couple = self.dataset.getCoupleId()
+        X.append(couple)
+        y.append(np.array([0.]))
+        switch = 1
+      elif switch == 1:
+        completed = False
+        while not completed:
+          group = self.groups[np.random.randint(0,len(self.groups))]
+          pair  = self.dataset.generateRandomPair(len(group))
+          k1 = group[pair[0]]
+          k2 = group[pair[1]]
+          #print("{}-{}".format(k1,k2))
+          wrong = self.dataset.getWrongIdByKanji(k1,k2)
+      
+          if wrong is None:
+            continue
+          X.append(wrong)
+          y.append(np.array([1.]))
+          completed = True
+          switch = 2
+      else:
+        wrong = self.dataset.getWrongId()
+        X.append(wrong)
+        y.append(np.array([1.]))
+        switch = 0
+
+    self.epochdataX = np.asarray(X)
     self.epochdataY = np.asarray(y)
