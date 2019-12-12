@@ -13,24 +13,37 @@ class Fonts:
     id = np.random.randint(0,len(self.loaded))
     return self.loaded[id]
     
-fonts = Fonts('fonts', 88)
 
 def showImage(img):
   plt.imshow(np.divide(img.reshape(96,96,4),255), interpolation='nearest')
 
-def AddRotatedText(image,text,font,angle, color):
-  txt=Image.new('L', (100,100))
+class KanjiGenerator:
+  def __init__(self):
+    self.fonts = Fonts('fonts', 88)
+    self.scalerange = [1, 1]
+    self.rotaterange = [0, 0]
+    self.size = (96, 96)
+    
+  def AddRotatedText(self,image,text,font,angle, color):
+    txt=Image.new('L', (100,100))
 
-  d = ImageDraw.Draw(txt)
-  d.text((0,0), text, font = font, fill=255)
-  w=txt.rotate(angle, expand=1)
+    d = ImageDraw.Draw(txt)
+    d.text((0,0), text, font = font, fill=255)
+    w=txt.rotate(angle, expand=1)
 
-  image.paste( ImageOps.colorize(w, (0,0,0,0), color), (0,0), w)
+    image.paste( ImageOps.colorize(w, (0,0,0,0), color), (0,0), w)
 
-def GenerateKanji(kanji,fonts):
-  img = Image.new(mode='RGBA', size=(96,96), color=(255,255,255))
-  fnt = fonts.GetRandomFont()
-  
-  AddRotatedText(img,kanji,fnt,np.random.randint(-100,100) / 10.0, (0,0,0));
+  def getRotateAngle(self):
+    if self.rotaterange[0] == self.rotaterange[1]:
+      return self.rotaterange[0]
+    else:
+      return np.random.randint(self.rotaterange[0]*10,self.rotaterange[1]*10) / 10.0
 
-  return np.asarray(img).astype(float).reshape((1,96,96,4))
+  def generate(self,kanji):
+    img = Image.new(mode='RGBA', size=self.size, color=(255,255,255))
+    fnt = self.fonts.GetRandomFont()
+    
+    
+    self.AddRotatedText(img,kanji,fnt, self.getRotateAngle(), (0,0,0));
+
+    return np.asarray(img).astype(float)
