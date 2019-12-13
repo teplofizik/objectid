@@ -17,7 +17,8 @@ class Trainer:
     self.modelcheckpoint = None
     self.reducelronplateau = None
     self.val_gen = None
-    self.epochs = 50
+    self.gen = None
+    self.epochs = 10
     self.batchsize = 200
     self.trainsize = 15000
     self.valsize = 1500
@@ -36,10 +37,16 @@ class Trainer:
     self.reducelronplateau = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0.000001)
 
   def run(self, train, val = None):
-    gen = DatasetLongSequence(train,self.trainsize,self.batchsize)
+    if train is not None:
+      if self.gen != None:
+        del self.gen
+      self.gen = DatasetLongSequence(train,self.trainsize,self.batchsize)
+
     if val is not None:
-      del self.val_gen
+      if self.val_gen != None:
+        del self.val_gen
       self.val_gen = DatasetSequence(val,self.valsize,200)
+
     callbacks = []
     if self.earlystopping is not None:
       callbacks.append(self.earlystopping)
@@ -48,4 +55,4 @@ class Trainer:
     if self.reducelronplateau is not None:
       callbacks.append(self.reducelronplateau)
 
-    outputs = self.model.fit_generator(gen, epochs=self.epochs, validation_data = self.val_gen, callbacks=callbacks)
+    outputs = self.model.fit_generator(self.gen, epochs=self.epochs, validation_data = self.val_gen, callbacks=callbacks)

@@ -32,7 +32,7 @@ class ObjectDataset:
   # filename: path to metadat file
   def load(self):
     try:
-      fp = open(self.getListFilename(), 'r', encoding="utf8")
+      fp = open(self.getListFilename(), 'r', encoding="UTF-8")
       for cnt, line in enumerate(fp):
         ingroup = line.strip().split(",")
         group = ObjectGroup()
@@ -424,7 +424,6 @@ class DatasetLongSequence(Sequence):
     
     self.epochdataY = np.asarray(y)
 
-
 class DatasetLongGroupSequence(Sequence):
   def __init__(self, dataset, count, batch_size, groupfn, updateeach):
     self.dataset = dataset
@@ -476,6 +475,7 @@ class DatasetLongGroupSequence(Sequence):
     X=[]
     y=[]
     switch=0
+    #print("dataset updated\n")
     for _ in range(self.count):
       if switch == 0:
         couple = self.dataset.getCoupleId()
