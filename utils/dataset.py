@@ -425,7 +425,7 @@ class DatasetLongSequence(Sequence):
     self.epochdataY = np.asarray(y)
 
 class DatasetLongGroupSequence(Sequence):
-  def __init__(self, dataset, count, batch_size, groupfn, updateeach):
+  def __init__(self, dataset, count, batch_size, groupfn, updateeach,similareach):
     self.dataset = dataset
     self.epoch = 0
     self.count = count
@@ -434,6 +434,7 @@ class DatasetLongGroupSequence(Sequence):
     self.epochdataY = []
     self.groups = []
     self.updateeach = updateeach
+    self.similareach = similareach
 
     with open(groupfn, 'r', encoding="utf8") as fp:
       for cnt, line in enumerate(fp):
@@ -471,38 +472,54 @@ class DatasetLongGroupSequence(Sequence):
         # modify data
       self.epoch += 1
 
+  def getNext(self,value):
+    if value:
+      couple = self.dataset.getCoupleId()
+      return couple, np.array([0.])
+    else:
+      wrong = self.dataset.getWrongId()
+      return wrong, np.array([1.])
+
+  def getSimilar(self):
+      counter = 0
+      while True:
+        group = self.groups[np.random.randint(0,len(self.groups))]
+        pair  = self.dataset.generateRandomPair(len(group))
+        k1 = group[pair[0]]
+        k2 = group[pair[1]]
+        wrong = self.dataset.getWrongIdByKanji(k1,k2)
+          
+        if wrong is None:
+          continue
+      
+        return wrong, np.array([1.])
+
   def updateDataset(self):
     X=[]
     y=[]
-    switch=0
+    counter = 0
+    value = True
     #print("dataset updated\n")
     for _ in range(self.count):
-      if switch == 0:
-        couple = self.dataset.getCoupleId()
-        X.append(couple)
-        y.append(np.array([0.]))
-        switch = 1
-      elif switch == 1:
-        completed = False
-        while not completed:
-          group = self.groups[np.random.randint(0,len(self.groups))]
-          pair  = self.dataset.generateRandomPair(len(group))
-          k1 = group[pair[0]]
-          k2 = group[pair[1]]
-          #print("{}-{}".format(k1,k2))
-          wrong = self.dataset.getWrongIdByKanji(k1,k2)
-      
-          if wrong is None:
-            continue
-          X.append(wrong)
-          y.append(np.array([1.]))
-          completed = True
-          switch = 2
+      if(value):
+        rx,ry = self.getNext(value)
+        X.append(rx)
+        y.append(ry)
       else:
-        wrong = self.dataset.getWrongId()
-        X.append(wrong)
-        y.append(np.array([1.]))
-        switch = 0
+        counter = counter + 1
+        if self.similareach > 0:
+          if counter == self.similareach:
+            counter = 0
+            rx,ry = self.getSimilar()
+            X.append(rx)
+            y.append(ry)
+            continue
+        
+        rx,ry = self.getNext(value)
+        X.append(rx)
+        y.append(ry)
+        
+      value = not value
 
     self.epochdataX = np.asarray(X)
     self.epochdataY = np.asarray(y)
