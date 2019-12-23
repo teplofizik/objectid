@@ -157,7 +157,7 @@ class ObjectDataset:
 
   def getWrongIdByKanji(self,k1,k2):
     kid1 = self.getGroupIdByKey(k1)
-    kid2 = self.getGroupIdByKey(k1)
+    kid2 = self.getGroupIdByKey(k2)
     
     if(kid1 is None) or(kid2 is None):
       return None
@@ -368,13 +368,14 @@ class DatasetSequence(Sequence):
     self.epochdataY = np.asarray(y)
 
 class DatasetLongSequence(Sequence):
-  def __init__(self, dataset, count, batch_size):
+  def __init__(self, dataset, count, batch_size,update_each=0):
     self.dataset = dataset
     self.epoch = 0
     self.count = count
     self.batch_size = batch_size
     self.epochdataX = []
     self.epochdataY = []
+    self.update_each = update_each
     self.updateDataset()
 
   def __len__(self):
@@ -397,12 +398,12 @@ class DatasetLongSequence(Sequence):
     return [np.asarray(X1),np.asarray(X2)],arry
 
   def on_epoch_end(self):
-    if self.epoch % 20 == 0:
-       self.epoch += 1
-    else:
-       # modify data
-       #self.updateDataset()
-       self.epoch += 1
+    if self.update_each != 0:
+  
+      if self.epoch % self.update_each == 0:
+         # modify data
+         self.updateDataset()
+      self.epoch += 1
 
   def updateDataset(self):
     X=[]
